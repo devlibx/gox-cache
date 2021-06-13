@@ -2,8 +2,8 @@ package noopCache
 
 import (
 	"context"
+	"fmt"
 	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
 	goxCache "github.com/devlibx/gox-cache"
 	"go.uber.org/zap"
 )
@@ -17,15 +17,27 @@ func (n noOpCacheImpl) IsRunning(ctx context.Context) (bool, error) {
 }
 
 func (n noOpCacheImpl) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
-	return key, nil
+	return key, &goxCache.CacheError{
+		Err:       goxCache.ErrNoOpCacheError,
+		Message:   fmt.Sprintf("[expected error] key not stored in  NOOP cache: key=%s", key),
+		ErrorCode: "no_op_cache",
+	}
 }
 
 func (n noOpCacheImpl) Get(ctx context.Context, key string) (interface{}, string, error) {
-	return nil, key, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
+	return nil, key, &goxCache.CacheError{
+		Err:       goxCache.ErrNoOpCacheError,
+		Message:   fmt.Sprintf("[expected error] key not found in  NOOP cache: key=%s", key),
+		ErrorCode: "no_op_cache",
+	}
 }
 
 func (n noOpCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
-	return nil, key, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
+	return nil, key, &goxCache.CacheError{
+		Err:       goxCache.ErrNoOpCacheError,
+		Message:   fmt.Sprintf("[expected error] key not found in  NOOP cache: key=%s", key),
+		ErrorCode: "no_op_cache",
+	}
 }
 
 func (n noOpCacheImpl) Close() error {
