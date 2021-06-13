@@ -1,0 +1,7 @@
+cacheConfig:
+  enabled: true
+  caches:
+    testRedis:
+      type: redis
+      endpoint: localhost:6379
+      enabled: true
