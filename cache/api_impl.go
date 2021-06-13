@@ -43,6 +43,7 @@ func (r *registryImpl) RegisterCache(config *goxCache.Config) (goxCache.Cache, e
 	} else {
 		cache, _ := noopCache.NewNoOpCache(r.CrossFunction, config)
 		r.caches[config.Name] = cache
+		return cache, nil
 	}
 	return nil, errors.New("failed to register cache to registry: name=%s", config.Name)
 }
