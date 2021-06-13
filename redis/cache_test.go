@@ -32,10 +32,10 @@ func TestRedisCache(t *testing.T) {
 	}
 	fmt.Println("redis is running: result", result)
 
-	err = c.Put(ctx, id, "value_"+id, 0)
+	_, err = c.Put(ctx, id, "value_"+id, 0)
 	assert.NoError(t, err)
 
-	valueOfKey, err := c.Get(ctx, id)
+	valueOfKey, _, err := c.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
 }
@@ -61,13 +61,13 @@ func TestRedisCache_Ttl(t *testing.T) {
 	}
 	fmt.Println("redis is running: result", result)
 
-	err = c.Put(ctx, id, "value_"+id, 1)
+	_, err = c.Put(ctx, id, "value_"+id, 1)
 	assert.NoError(t, err)
 
 	var notFoundError error
 	for i := 0; i < 20; i++ {
 		time.Sleep(1 * time.Second)
-		_, notFoundError = c.Get(ctx, id)
+		_, _, notFoundError = c.Get(ctx, id)
 		if notFoundError != nil {
 			fmt.Println("Got not found error in index=", i)
 			break

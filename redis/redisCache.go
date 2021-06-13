@@ -42,7 +42,7 @@ func (r *redisCacheImpl) IsRunning(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, ttlInSec int) error {
+func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
 	t := r.putTimer.Start()
 	defer t.Stop()
 
@@ -61,15 +61,15 @@ func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, 
 	result, err := status.Result()
 	if err != nil {
 		r.putCounterError.Inc(1)
-		return errors.Wrap(err, "failed to put key in cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
+		return keyToStore, errors.Wrap(err, "failed to put key in cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
 	} else {
 		r.putCounter.Inc(1)
 		r.logger.Debug("key stored in cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore), zap.String("result", result))
-		return nil
+		return keyToStore, nil
 	}
 }
 
-func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, error) {
+func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, string, error) {
 	t := r.getTimer.Start()
 	defer t.Stop()
 
@@ -80,27 +80,27 @@ func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, erro
 	result, err := r.redisClient.Get(ctxWithTimeout, keyToStore).Bytes()
 	if err != nil {
 		r.getCounterError.Inc(1)
-		return nil, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
+		return nil, keyToStore, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
 	} else {
 		r.getCounter.Inc(1)
 		r.logger.Debug("got key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore), zap.ByteString("result", result))
-		return result, nil
+		return result, keyToStore, nil
 	}
 }
 
-func (r *redisCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, error) {
-	data, err := r.Get(ctx, key)
+func (r *redisCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
+	data, keyToStore, err := r.Get(ctx, key)
 	if err != nil {
-		return nil, err
+		return nil, keyToStore, err
 	}
 
 	b := data.([]byte)
 	result, err := gox.StringObjectMapFromString(string(b))
 	if err != nil {
 		r.getCounter.Inc(1)
-		return nil, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s", r.config.Name, key)
+		return nil, keyToStore, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s", r.config.Name, key)
 	}
-	return result, nil
+	return result, keyToStore, nil
 }
 
 func (r *redisCacheImpl) Close() error {

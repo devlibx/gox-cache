@@ -24,9 +24,9 @@ type Configuration struct {
 
 type Cache interface {
 	IsRunning(ctx context.Context) (bool, error)
-	Put(ctx context.Context, key string, data interface{}, ttlInSec int) error
-	Get(ctx context.Context, key string) (interface{}, error)
-	GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, error)
+	Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error)
+	Get(ctx context.Context, key string) (interface{}, string, error)
+	GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error)
 	Close() error
 }
 

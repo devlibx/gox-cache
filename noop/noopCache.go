@@ -16,16 +16,16 @@ func (n noOpCacheImpl) IsRunning(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-func (n noOpCacheImpl) Put(ctx context.Context, key string, data interface{}, ttlInSec int) error {
-	return nil
+func (n noOpCacheImpl) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
+	return key, nil
 }
 
-func (n noOpCacheImpl) Get(ctx context.Context, key string) (interface{}, error) {
-	return nil, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
+func (n noOpCacheImpl) Get(ctx context.Context, key string) (interface{}, string, error) {
+	return nil, key, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
 }
 
-func (n noOpCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, error) {
-	return nil, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
+func (n noOpCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
+	return nil, key, errors.New("[expected error] key not found in  NOOP cache: key=%s", key)
 }
 
 func (n noOpCacheImpl) Close() error {

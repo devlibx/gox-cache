@@ -46,11 +46,11 @@ func TestRegistry(t *testing.T) {
 	fmt.Println("redis is running: result", result)
 
 	// Put data in cache - TTL=0 means never expire
-	err = redisCacheObject.Put(ctx, id, "value_"+id, 0)
+	_, err = redisCacheObject.Put(ctx, id, "value_"+id, 0)
 	assert.NoError(t, err)
 
 	// Get data
-	valueOfKey, err := redisCacheObject.Get(ctx, id)
+	valueOfKey, _, err := redisCacheObject.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
 }

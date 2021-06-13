@@ -51,12 +51,13 @@ func (mr *MockCacheMockRecorder) Close() *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockCache) Get(ctx context.Context, key string) (interface{}, error) {
+func (m *MockCache) Get(ctx context.Context, key string) (interface{}, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, key)
 	ret0, _ := ret[0].(interface{})
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Get indicates an expected call of Get.
@@ -66,12 +67,13 @@ func (mr *MockCacheMockRecorder) Get(ctx, key interface{}) *gomock.Call {
 }
 
 // GetAsMap mocks base method.
-func (m *MockCache) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, error) {
+func (m *MockCache) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAsMap", ctx, key)
 	ret0, _ := ret[0].(gox.StringObjectMap)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetAsMap indicates an expected call of GetAsMap.
@@ -96,11 +98,12 @@ func (mr *MockCacheMockRecorder) IsRunning(ctx interface{}) *gomock.Call {
 }
 
 // Put mocks base method.
-func (m *MockCache) Put(ctx context.Context, key string, data interface{}, ttlInSec int) error {
+func (m *MockCache) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", ctx, key, data, ttlInSec)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Put indicates an expected call of Put.
