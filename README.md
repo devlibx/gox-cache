@@ -13,8 +13,20 @@ cacheConfig:
       type: redis
       endpoint: localhost:6379
       enabled: true
-      put_timeout_ms: 10
-      get_timeout_ms: 10
+      properties:
+        put_timeout_ms: 10
+        get_timeout_ms: 10
+```
+
+Other redis properties:
+
+```yaml
+properties:
+  put_timeout_ms: 10
+  get_timeout_ms: 10
+  db: 0
+  password: your_password
+  prefix: some_prefix       // all keys are prefixed with this string to avoid key colission 
 ```
 
 ##### Initialize cache registry
