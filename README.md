@@ -7,12 +7,10 @@ Refer to ```cache/api_impl_test.go``` for detailed usage
 ```yaml
 # Default Put/Get timeout = 10ms
 cacheConfig:
-  enabled: true
   caches:
     testRedis:
       type: redis
       endpoint: localhost:6379
-      enabled: true
       properties:
         put_timeout_ms: 10
         get_timeout_ms: 10

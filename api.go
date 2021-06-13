@@ -11,12 +11,12 @@ type Config struct {
 	Name       string
 	Type       string              `yaml:"type"`
 	Endpoint   string              `yaml:"endpoint"`
-	Enabled    bool                `yaml:"enabled"`
+	Disabled   bool                `yaml:"disabled"`
 	Properties gox.StringObjectMap `yaml:"properties"`
 }
 
 type Configuration struct {
-	Enabled    bool                `yaml:"enabled"`
+	Disabled   bool                `yaml:"disabled"`
 	Properties gox.StringObjectMap `yaml:"properties"`
 	Providers  map[string]Config   `yaml:"caches"`
 }

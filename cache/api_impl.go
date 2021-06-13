@@ -29,7 +29,7 @@ func (r *registryImpl) Close() error {
 }
 
 func (r *registryImpl) RegisterCache(config *goxCache.Config) (goxCache.Cache, error) {
-	if config.Enabled {
+	if !config.Disabled {
 		switch strings.ToLower(config.Type) {
 		case "redis":
 			cache, err := redisCache.NewRedisCache(r.CrossFunction, &goxCache.Config{})
