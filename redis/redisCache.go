@@ -56,14 +56,15 @@ func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, 
 		ttl = time.Duration(ttlInSec) * time.Second
 	}
 
-	status := r.redisClient.Set(ctxWithTimeout, r.buildKeyName(key), data, ttl)
+	keyToStore := r.buildKeyName(key)
+	status := r.redisClient.Set(ctxWithTimeout, keyToStore, data, ttl)
 	result, err := status.Result()
 	if err != nil {
 		r.putCounterError.Inc(1)
-		return errors.Wrap(err, "failed to put key in cache: name=%s, key=%s", r.config.Name, key)
+		return errors.Wrap(err, "failed to put key in cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
 	} else {
 		r.putCounter.Inc(1)
-		r.logger.Debug("key stored in cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("result", result))
+		r.logger.Debug("key stored in cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore), zap.String("result", result))
 		return nil
 	}
 }
@@ -75,13 +76,14 @@ func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, erro
 	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
 	defer cf()
 
-	result, err := r.redisClient.Get(ctxWithTimeout, r.buildKeyName(key)).Bytes()
+	keyToStore := r.buildKeyName(key)
+	result, err := r.redisClient.Get(ctxWithTimeout, keyToStore).Bytes()
 	if err != nil {
 		r.getCounterError.Inc(1)
-		return nil, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s", r.config.Name, key)
+		return nil, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
 	} else {
 		r.getCounter.Inc(1)
-		r.logger.Debug("got key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.ByteString("result", result))
+		r.logger.Debug("got key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore), zap.ByteString("result", result))
 		return result, nil
 	}
 }
