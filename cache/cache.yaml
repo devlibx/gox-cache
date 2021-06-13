@@ -1,6 +1,7 @@
 cacheConfig:
   caches:
     testRedis:
+      prefix: my_cache
       type: redis
       endpoint: localhost:6379
       properties:

@@ -18,7 +18,7 @@ func TestRedisCache(t *testing.T) {
 		Name:       "dummy",
 		Type:       "redis",
 		Endpoint:   "localhost:6379",
-		Properties: map[string]interface{}{"prefix": id},
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
 	})
 	assert.NoError(t, err)
 
@@ -47,7 +47,7 @@ func TestRedisCache_Ttl(t *testing.T) {
 		Name:       "dummy",
 		Type:       "redis",
 		Endpoint:   "localhost:6379",
-		Properties: map[string]interface{}{"prefix": id},
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_Ttl_" + id},
 	})
 	assert.NoError(t, err)
 

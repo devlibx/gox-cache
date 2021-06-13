@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/util"
 	goxCache "github.com/devlibx/gox-cache"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -120,7 +121,14 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 	if config.Properties == nil {
 		config.Properties = gox.StringObjectMap{}
 	}
-	prefix := config.Properties.StringOrDefault("prefix", "default")
+
+	// Set prefix key
+	prefix := ""
+	if !util.IsStringEmpty(config.Prefix) {
+		prefix = config.Prefix + "_" + config.Properties.StringOrDefault("prefix", "default")
+	} else {
+		prefix = config.Properties.StringOrDefault("prefix", "default")
+	}
 
 	c := &redisCacheImpl{
 		CrossFunction:   cf,

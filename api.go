@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Name       string
+	Prefix     string              `yaml:"prefix"`
 	Type       string              `yaml:"type"`
 	Endpoint   string              `yaml:"endpoint"`
 	Disabled   bool                `yaml:"disabled"`

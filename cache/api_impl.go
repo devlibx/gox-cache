@@ -32,7 +32,7 @@ func (r *registryImpl) RegisterCache(config *goxCache.Config) (goxCache.Cache, e
 	if !config.Disabled {
 		switch strings.ToLower(config.Type) {
 		case "redis":
-			cache, err := redisCache.NewRedisCache(r.CrossFunction, &goxCache.Config{})
+			cache, err := redisCache.NewRedisCache(r.CrossFunction, config)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to register cache to registry: name=%s", config.Name)
 			} else {
