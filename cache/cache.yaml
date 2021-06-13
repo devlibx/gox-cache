@@ -5,3 +5,5 @@ cacheConfig:
       type: redis
       endpoint: localhost:6379
       enabled: true
+      put_timeout_ms: 10
+      get_timeout_ms: 10

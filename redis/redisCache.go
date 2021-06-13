@@ -17,6 +17,8 @@ import (
 type redisCacheImpl struct {
 	gox.CrossFunction
 	config          *goxCache.Config
+	putTimeoutMs    int
+	getTimeoutMs    int
 	redisClient     *redis.Client
 	closeDoOnce     sync.Once
 	logger          *zap.Logger
@@ -43,6 +45,9 @@ func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, 
 	t := r.putTimer.Start()
 	defer t.Stop()
 
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.putTimeoutMs)*time.Millisecond)
+	defer cf()
+
 	var ttl time.Duration
 	if ttlInSec > 0 {
 		ttl = 100000 * time.Hour
@@ -50,7 +55,7 @@ func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, 
 		ttl = time.Duration(ttlInSec) * time.Second
 	}
 
-	status := r.redisClient.Set(ctx, r.buildKeyName(key), data, ttl)
+	status := r.redisClient.Set(ctxWithTimeout, r.buildKeyName(key), data, ttl)
 	result, err := status.Result()
 	if err != nil {
 		r.putCounterError.Inc(1)
@@ -66,7 +71,10 @@ func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, erro
 	t := r.getTimer.Start()
 	defer t.Stop()
 
-	result, err := r.redisClient.Get(ctx, r.buildKeyName(key)).Bytes()
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	result, err := r.redisClient.Get(ctxWithTimeout, r.buildKeyName(key)).Bytes()
 	if err != nil {
 		r.getCounterError.Inc(1)
 		return nil, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s", r.config.Name, key)
@@ -109,7 +117,11 @@ func (r *redisCacheImpl) Ping(ctx context.Context) (string, error) {
 }
 
 func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cache, error) {
+	if config.Properties == nil {
+		config.Properties = gox.StringObjectMap{}
+	}
 	prefix := config.Properties.StringOrDefault("prefix", "default")
+
 	c := &redisCacheImpl{
 		CrossFunction:   cf,
 		config:          config,
@@ -122,6 +134,8 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 		getCounter:      cf.Metric().Counter(prefix + "_get"),
 		getCounterError: cf.Metric().Counter(prefix + "_get_error"),
 		getTimer:        cf.Metric().Timer(prefix + "_get_time"),
+		putTimeoutMs:    config.Properties.IntOrDefault("put_timeout_ms", 10),
+		getTimeoutMs:    config.Properties.IntOrDefault("get_timeout_ms", 10),
 	}
 
 	c.redisClient = redis.NewClient(&redis.Options{

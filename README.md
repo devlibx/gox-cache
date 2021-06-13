@@ -5,6 +5,7 @@ Refer to ```cache/api_impl_test.go``` for detailed usage
 ##### Define cache config in Yaml
 
 ```yaml
+# Default Put/Get timeout = 10ms
 cacheConfig:
   enabled: true
   caches:
@@ -12,6 +13,8 @@ cacheConfig:
       type: redis
       endpoint: localhost:6379
       enabled: true
+      put_timeout_ms: 10
+      get_timeout_ms: 10
 ```
 
 ##### Initialize cache registry
