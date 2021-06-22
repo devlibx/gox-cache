@@ -10,9 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+	"go.uber.org/goleak"
 )
 
 func TestRedisCache(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	id := uuid.NewString()
 	cf, _ := test.MockCf(t)
 	c, err := NewRedisCache(cf, &goxCache.Config{
@@ -22,6 +24,7 @@ func TestRedisCache(t *testing.T) {
 		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
 	})
 	assert.NoError(t, err)
+	defer c.Close()
 
 	ctx, cn := context.WithTimeout(context.Background(), time.Second)
 	defer cn()
@@ -42,6 +45,7 @@ func TestRedisCache(t *testing.T) {
 }
 
 func TestRedisCache_Ttl(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	id := uuid.NewString()
 	cf, _ := test.MockCf(t)
 	c, err := NewRedisCache(cf, &goxCache.Config{
@@ -51,6 +55,7 @@ func TestRedisCache_Ttl(t *testing.T) {
 		Properties: map[string]interface{}{"prefix": "TestRedisCache_Ttl_" + id},
 	})
 	assert.NoError(t, err)
+	defer c.Close()
 
 	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cn()
@@ -79,6 +84,8 @@ func TestRedisCache_Ttl(t *testing.T) {
 }
 
 func TestRedisCache_PubSub(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
 	id := uuid.NewString()
 	cf, _ := test.MockCf(t)
 	c, err := NewRedisCache(cf, &goxCache.Config{
@@ -88,6 +95,7 @@ func TestRedisCache_PubSub(t *testing.T) {
 		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
 	})
 	assert.NoError(t, err)
+	defer c.Close()
 
 	ctx, cn := context.WithTimeout(context.Background(), time.Second)
 	defer cn()

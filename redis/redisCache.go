@@ -144,7 +144,7 @@ func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.Subscr
 
 			case <-ticker.C:
 				if r.closed {
-					_ = pubSub.Close()
+					break exitLoop
 				}
 
 			case msg, open := <-messageChannel:
@@ -164,6 +164,7 @@ func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.Subscr
 			}
 		}
 
+		_ = pubSub.Close()
 		ticker.Stop()
 		r.logger.Info("closing pub/sub loop")
 	}()
