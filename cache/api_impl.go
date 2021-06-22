@@ -59,6 +59,11 @@ func (r *registryImpl) GetCache(name string) (goxCache.Cache, error) {
 }
 
 func NewRegistry(ctx context.Context, cf gox.CrossFunction, configuration goxCache.Configuration) (goxCache.Registry, error) {
+	if configuration.Disabled {
+		cf.Logger().Warn("********** [Disabled] config cache registry settings are marked as disabled - returning no-op registry **********")
+		return NewNoOpRegistry(cf, configuration)
+	}
+
 	r := &registryImpl{
 		ctx:           ctx,
 		CrossFunction: cf,
@@ -82,4 +87,39 @@ func NewRegistry(ctx context.Context, cf gox.CrossFunction, configuration goxCac
 	}()
 
 	return r, nil
+}
+
+func NewNoOpRegistry(cf gox.CrossFunction, configuration goxCache.Configuration) (goxCache.Registry, error) {
+	n := &noOp{
+		cf:     cf,
+		caches: map[string]goxCache.Cache{},
+		logger: cf.Logger().Named("cache.dummy"),
+	}
+	for name, c := range configuration.Providers {
+		c.Name = name
+		if _, err := n.RegisterCache(&c); err != nil {
+			return nil, err
+		}
+	}
+	return n, nil
+}
+
+type noOp struct {
+	cf     gox.CrossFunction
+	caches map[string]goxCache.Cache
+	logger *zap.Logger
+}
+
+func (n noOp) RegisterCache(config *goxCache.Config) (goxCache.Cache, error) {
+	n.caches[config.Name], _ = noopCache.NewNoOpCache(n.cf, config)
+	return n.caches[config.Name], nil
+}
+
+func (n noOp) GetCache(name string) (goxCache.Cache, error) {
+	n.logger.Info("Returning a dummy cache from dummy registry")
+	return n.caches[name], nil
+}
+
+func (n noOp) Close() error {
+	return nil
 }

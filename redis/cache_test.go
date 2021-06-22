@@ -3,6 +3,7 @@ package redisCache
 import (
 	"context"
 	"fmt"
+	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/test"
 	goxCache "github.com/devlibx/gox-cache"
 	"github.com/google/uuid"
@@ -74,5 +75,48 @@ func TestRedisCache_Ttl(t *testing.T) {
 		}
 	}
 	assert.Error(t, notFoundError, "we must get a key not found error")
+
+}
+
+func TestRedisCache_PubSub(t *testing.T) {
+	id := uuid.NewString()
+	cf, _ := test.MockCf(t)
+	c, err := NewRedisCache(cf, &goxCache.Config{
+		Name:       "dummy",
+		Type:       "redis",
+		Endpoint:   "localhost:6379",
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
+	})
+	assert.NoError(t, err)
+
+	ctx, cn := context.WithTimeout(context.Background(), time.Second)
+	defer cn()
+
+	result, err := c.IsRunning(ctx)
+	if err != nil {
+		t.Skip("redis is not running, skip this test: result=", result)
+		return
+	}
+	fmt.Println("redis is running: result", result)
+
+	gotMessage := false
+	ctx1, cn1 := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cn1()
+	err = c.Subscribe(ctx, func(data gox.StringObjectMap) error {
+		if id == data.StringOrEmpty("data") {
+			fmt.Printf("TestRedisCache_PubSub - got message in redis pubSub: message=%v \n", data)
+			gotMessage = true
+			cn1()
+		}
+		return nil
+	})
+	assert.NoError(t, err)
+
+	data, err := c.Publish(ctx, gox.StringObjectMap{"data": id})
+	fmt.Println(data)
+	assert.NoError(t, err)
+
+	<-ctx1.Done()
+	assert.True(t, gotMessage)
 
 }

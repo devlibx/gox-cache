@@ -12,6 +12,14 @@ type noOpCacheImpl struct {
 	logger *zap.Logger
 }
 
+func (n noOpCacheImpl) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
+	return nil, nil
+}
+
+func (n noOpCacheImpl) Subscribe(ctx context.Context, callback goxCache.SubscribeCallbackFunc) error {
+	return nil
+}
+
 func (n noOpCacheImpl) IsRunning(ctx context.Context) (bool, error) {
 	return false, nil
 }

@@ -97,6 +97,21 @@ func (mr *MockCacheMockRecorder) IsRunning(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockCache)(nil).IsRunning), ctx)
 }
 
+// Publish mocks base method.
+func (m *MockCache) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Publish", ctx, data)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Publish indicates an expected call of Publish.
+func (mr *MockCacheMockRecorder) Publish(ctx, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockCache)(nil).Publish), ctx, data)
+}
+
 // Put mocks base method.
 func (m *MockCache) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
 	m.ctrl.T.Helper()
@@ -110,6 +125,20 @@ func (m *MockCache) Put(ctx context.Context, key string, data interface{}, ttlIn
 func (mr *MockCacheMockRecorder) Put(ctx, key, data, ttlInSec interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCache)(nil).Put), ctx, key, data, ttlInSec)
+}
+
+// Subscribe mocks base method.
+func (m *MockCache) Subscribe(ctx context.Context, callback goxCache.SubscribeCallbackFunc) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Subscribe", ctx, callback)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Subscribe indicates an expected call of Subscribe.
+func (mr *MockCacheMockRecorder) Subscribe(ctx, callback interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockCache)(nil).Subscribe), ctx, callback)
 }
 
 // MockRegistry is a mock of Registry interface.

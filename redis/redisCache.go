@@ -6,6 +6,7 @@ import (
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/metrics"
+	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
 	goxCache "github.com/devlibx/gox-cache"
 	"github.com/go-redis/redis/v8"
@@ -21,7 +22,9 @@ type redisCacheImpl struct {
 	putTimeoutMs    int
 	getTimeoutMs    int
 	redisClient     *redis.Client
+	pubSubTopicName string
 	closeDoOnce     sync.Once
+	closed          bool
 	logger          *zap.Logger
 	prefix          string
 	putCounter      metrics.Counter
@@ -103,10 +106,75 @@ func (r *redisCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringOb
 	return result, keyToStore, nil
 }
 
+func (r *redisCacheImpl) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
+
+	dataStr, err := serialization.Stringify(data)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert input to string: name=%s", r.config.Name)
+	}
+
+	publishErr := r.redisClient.Publish(ctx, r.pubSubTopicName, dataStr)
+	if publishErr != nil {
+		return publishErr, errors.Wrap(publishErr.Err(), "failed to publish event to redis: name=%s, channelName=%s", r.config.Name, r.pubSubTopicName)
+	} else {
+		return publishErr, nil
+	}
+}
+
+func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.SubscribeCallbackFunc) error {
+
+	// Wait for confirmation that subscription is created before publishing anything.
+	pubSub := r.redisClient.Subscribe(ctx, r.pubSubTopicName)
+	_, err := pubSub.Receive(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to setup subscribe in redis: name=%s, channelName=%s", r.config.Name, r.pubSubTopicName)
+	}
+
+	// Get message channel
+	messageChannel := pubSub.Channel()
+
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond)
+
+	exitLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				break exitLoop
+
+			case <-ticker.C:
+				if r.closed {
+					_ = pubSub.Close()
+				}
+
+			case msg, open := <-messageChannel:
+				if open {
+					payload, err := gox.StringObjectMapFromString(msg.Payload)
+					if err != nil {
+						r.logger.Error("error in reading data from redis pub/sub", zap.String("payload", msg.Payload))
+					} else {
+						err := callback(payload)
+						if err != nil {
+							r.logger.Error("error in subscriber callback for redis pub/sub: data=%s", zap.String("payload", msg.Payload))
+						}
+					}
+				} else {
+					break exitLoop
+				}
+			}
+		}
+
+		ticker.Stop()
+		r.logger.Info("closing pub/sub loop")
+	}()
+	return nil
+}
+
 func (r *redisCacheImpl) Close() error {
 	var err error
 	r.closeDoOnce.Do(func() {
 		err = r.redisClient.Close()
+		r.closed = true
 	})
 	return err
 }
@@ -136,7 +204,8 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 		CrossFunction:   cf,
 		config:          config,
 		closeDoOnce:     sync.Once{},
-		logger:          cf.Logger().Named("cache.redis").Named(prefix),
+		logger:          cf.Logger().Named("cache.redis").Named(config.Name).Named(prefix),
+		pubSubTopicName: fmt.Sprintf("%s_%s_%s", prefix, config.Name, "pub_sub_topic"),
 		prefix:          prefix,
 		putCounter:      cf.Metric().Counter(prefix + "_put"),
 		putCounterError: cf.Metric().Counter(prefix + "_put_error"),

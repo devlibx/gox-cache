@@ -32,11 +32,15 @@ type Configuration struct {
 	Providers  map[string]Config   `yaml:"caches"`
 }
 
+type SubscribeCallbackFunc func(data gox.StringObjectMap) error
+
 type Cache interface {
 	IsRunning(ctx context.Context) (bool, error)
 	Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error)
 	Get(ctx context.Context, key string) (interface{}, string, error)
 	GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error)
+	Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error)
+	Subscribe(ctx context.Context, callback SubscribeCallbackFunc) error
 	Close() error
 }
 
