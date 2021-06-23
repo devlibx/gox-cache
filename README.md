@@ -29,11 +29,13 @@ properties:
 
 ##### Initialize cache registry
 
-type dummyConfig struct { Configuration goxCache.Configuration `yaml:"cacheConfig"`
+```go
+type dummyConfig struct { 
+	Configuration goxCache.Configuration `yaml:"cacheConfig"`
 }
 
 func TestRegistry(t *testing.T) { id := uuid.NewString()
-cf, _ := test.MockCf(t)
+    cf, _ := test.MockCf(t)
 
 	// Read config from YAML file
 	conf := dummyConfig{}
@@ -42,6 +44,8 @@ cf, _ := test.MockCf(t)
 
 	registry, err := NewRegistry(context.TODO(), cf, conf.Configuration)
 	assert.NoError(t, err)
+	
+	// Get cache by name 
 	redisCacheObject, err := registry.GetCache("testRedis")
 
 	// Context to timeout if it takes lot of time
@@ -64,7 +68,5 @@ cf, _ := test.MockCf(t)
 	valueOfKey, _, err := redisCacheObject.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
-
 }
-
 ```
