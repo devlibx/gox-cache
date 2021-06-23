@@ -19,6 +19,43 @@ type registryImpl struct {
 	closeDoOnce sync.Once
 }
 
+func (r *registryImpl) HealthCheck(ctx context.Context) (gox.StringObjectMap, error) {
+	result := gox.StringObjectMap{}
+	foundError := false
+	for name, cache := range r.caches {
+		r := gox.StringObjectMap{}
+		if cache.IsEnabled() {
+			r["enabled"] = true
+			running, err := cache.IsRunning(ctx)
+			if err == nil {
+				if running {
+					r["status"] = "ok"
+				} else {
+					r["status"] = "not-ok"
+					foundError = true
+				}
+			} else {
+				r["status"] = "not-ok"
+				r["err"] = err
+				foundError = true
+			}
+		} else {
+			r["enabled"] = false
+			r["status"] = "ok"
+		}
+		result[name] = r
+	}
+
+	finalResult := gox.StringObjectMap{}
+	if foundError {
+		finalResult["status"] = "not-ok"
+	} else {
+		finalResult["status"] = "ok"
+	}
+	finalResult["caches"] = result
+	return finalResult, nil
+}
+
 func (r *registryImpl) Close() error {
 	r.closeDoOnce.Do(func() {
 		for _, c := range r.caches {
@@ -108,6 +145,10 @@ type noOp struct {
 	cf     gox.CrossFunction
 	caches map[string]goxCache.Cache
 	logger *zap.Logger
+}
+
+func (n noOp) HealthCheck(ctx context.Context) (gox.StringObjectMap, error) {
+	return gox.StringObjectMap{"cache": gox.StringObjectMap{"status": "ok"}}, nil
 }
 
 func (n noOp) RegisterCache(config *goxCache.Config) (goxCache.Cache, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/test"
 	goxCache "github.com/devlibx/gox-cache"
@@ -53,4 +54,12 @@ func TestRegistry(t *testing.T) {
 	valueOfKey, _, err := redisCacheObject.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
+
+	s, err := registry.HealthCheck(ctx)
+	assert.NoError(t, err)
+	jsonStringOfMap := s.JsonStringOrEmptyJson()
+	mapFromJsonString := gox.StringObjectMapFromJsonOrEmpty(jsonStringOfMap)
+	fmt.Println(mapFromJsonString)
+	fmt.Println(jsonStringOfMap)
+
 }

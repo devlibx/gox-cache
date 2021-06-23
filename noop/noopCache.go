@@ -12,6 +12,10 @@ type noOpCacheImpl struct {
 	logger *zap.Logger
 }
 
+func (n noOpCacheImpl) IsEnabled() bool {
+	return false
+}
+
 func (n noOpCacheImpl) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
 	return nil, nil
 }

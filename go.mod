@@ -2,8 +2,10 @@ module github.com/devlibx/gox-cache
 
 go 1.16
 
+replace github.com/devlibx/gox-base => /Users/harishbohara/workspace/personal/gox/gox-base
+
 require (
-	github.com/devlibx/gox-base v0.0.74
+	github.com/devlibx/gox-base v0.0.90
 	github.com/go-redis/redis/v8 v8.10.0
 	github.com/golang/mock v1.5.0
 	github.com/google/uuid v1.2.0

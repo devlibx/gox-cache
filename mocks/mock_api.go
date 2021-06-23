@@ -82,6 +82,20 @@ func (mr *MockCacheMockRecorder) GetAsMap(ctx, key interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAsMap", reflect.TypeOf((*MockCache)(nil).GetAsMap), ctx, key)
 }
 
+// IsEnabled mocks base method.
+func (m *MockCache) IsEnabled() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsEnabled")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsEnabled indicates an expected call of IsEnabled.
+func (mr *MockCacheMockRecorder) IsEnabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEnabled", reflect.TypeOf((*MockCache)(nil).IsEnabled))
+}
+
 // IsRunning mocks base method.
 func (m *MockCache) IsRunning(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
@@ -191,6 +205,21 @@ func (m *MockRegistry) GetCache(name string) (goxCache.Cache, error) {
 func (mr *MockRegistryMockRecorder) GetCache(name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCache", reflect.TypeOf((*MockRegistry)(nil).GetCache), name)
+}
+
+// HealthCheck mocks base method.
+func (m *MockRegistry) HealthCheck(ctx context.Context) (gox.StringObjectMap, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HealthCheck", ctx)
+	ret0, _ := ret[0].(gox.StringObjectMap)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HealthCheck indicates an expected call of HealthCheck.
+func (mr *MockRegistryMockRecorder) HealthCheck(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealthCheck", reflect.TypeOf((*MockRegistry)(nil).HealthCheck), ctx)
 }
 
 // RegisterCache mocks base method.

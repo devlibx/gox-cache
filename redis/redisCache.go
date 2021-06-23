@@ -35,6 +35,10 @@ type redisCacheImpl struct {
 	getTimer        metrics.Timer
 }
 
+func (r *redisCacheImpl) IsEnabled() bool {
+	return !r.config.Disabled
+}
+
 func (r *redisCacheImpl) IsRunning(ctx context.Context) (bool, error) {
 	result, err := r.redisClient.Ping(ctx).Result()
 	if err != nil {
