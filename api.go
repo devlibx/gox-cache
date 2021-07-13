@@ -24,6 +24,7 @@ type Config struct {
 	Prefix     string              `yaml:"prefix"`
 	Type       string              `yaml:"type"`
 	Endpoint   string              `yaml:"endpoint"`
+	Endpoints  []string            `yaml:"endpoints"`
 	Disabled   bool                `yaml:"disabled"`
 	Clustered  bool                `yaml:"clustered"`
 	Properties gox.StringObjectMap `yaml:"properties"`
