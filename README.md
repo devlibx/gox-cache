@@ -11,10 +11,12 @@ cacheConfig:
     testRedis:
       type: redis
       endpoint: localhost:6379
+      clustered: false
       properties:
         put_timeout_ms: 10
         get_timeout_ms: 10
 ```
+<b>Put clustered=true if you are using clustered redis
 
 Other redis properties:
 

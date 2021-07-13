@@ -18,21 +18,22 @@ import (
 
 type redisCacheImpl struct {
 	gox.CrossFunction
-	config          *goxCache.Config
-	putTimeoutMs    int
-	getTimeoutMs    int
-	redisClient     *redis.Client
-	pubSubTopicName string
-	closeDoOnce     sync.Once
-	closed          bool
-	logger          *zap.Logger
-	prefix          string
-	putCounter      metrics.Counter
-	putCounterError metrics.Counter
-	putTimer        metrics.Timer
-	getCounter      metrics.Counter
-	getCounterError metrics.Counter
-	getTimer        metrics.Timer
+	config             *goxCache.Config
+	putTimeoutMs       int
+	getTimeoutMs       int
+	redisClient        *redis.Client
+	redisClusterClient *redis.ClusterClient
+	pubSubTopicName    string
+	closeDoOnce        sync.Once
+	closed             bool
+	logger             *zap.Logger
+	prefix             string
+	putCounter         metrics.Counter
+	putCounterError    metrics.Counter
+	putTimer           metrics.Timer
+	getCounter         metrics.Counter
+	getCounterError    metrics.Counter
+	getTimer           metrics.Timer
 }
 
 func (r *redisCacheImpl) IsEnabled() bool {
@@ -40,7 +41,13 @@ func (r *redisCacheImpl) IsEnabled() bool {
 }
 
 func (r *redisCacheImpl) IsRunning(ctx context.Context) (bool, error) {
-	result, err := r.redisClient.Ping(ctx).Result()
+	var result string
+	var err error
+	if r.redisClient != nil {
+		result, err = r.redisClient.Ping(ctx).Result()
+	} else {
+		result, err = r.redisClusterClient.Ping(ctx).Result()
+	}
 	if err != nil {
 		return false, err
 	} else if strings.ToUpper(result) == "PONG" {
@@ -64,7 +71,12 @@ func (r *redisCacheImpl) Put(ctx context.Context, key string, data interface{}, 
 	}
 
 	keyToStore := r.buildKeyName(key)
-	status := r.redisClient.Set(ctxWithTimeout, keyToStore, data, ttl)
+	var status *redis.StatusCmd
+	if r.redisClient != nil {
+		status = r.redisClient.Set(ctxWithTimeout, keyToStore, data, ttl)
+	} else {
+		status = r.redisClusterClient.Set(ctxWithTimeout, keyToStore, data, ttl)
+	}
 	result, err := status.Result()
 	if err != nil {
 		r.putCounterError.Inc(1)
@@ -84,7 +96,14 @@ func (r *redisCacheImpl) Get(ctx context.Context, key string) (interface{}, stri
 	defer cf()
 
 	keyToStore := r.buildKeyName(key)
-	result, err := r.redisClient.Get(ctxWithTimeout, keyToStore).Bytes()
+
+	var result []byte
+	var err error
+	if r.redisClient != nil {
+		result, err = r.redisClient.Get(ctxWithTimeout, keyToStore).Bytes()
+	} else {
+		result, err = r.redisClusterClient.Get(ctxWithTimeout, keyToStore).Bytes()
+	}
 	if err != nil {
 		r.getCounterError.Inc(1)
 		return nil, keyToStore, errors.Wrap(err, "failed to get key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
@@ -117,7 +136,12 @@ func (r *redisCacheImpl) Publish(ctx context.Context, data gox.StringObjectMap) 
 		return nil, errors.Wrap(err, "failed to convert input to string: name=%s", r.config.Name)
 	}
 
-	publishErr := r.redisClient.Publish(ctx, r.pubSubTopicName, dataStr)
+	var publishErr *redis.IntCmd
+	if r.redisClient != nil {
+		publishErr = r.redisClient.Publish(ctx, r.pubSubTopicName, dataStr)
+	} else {
+		publishErr = r.redisClusterClient.Publish(ctx, r.pubSubTopicName, dataStr)
+	}
 	if publishErr != nil {
 		return publishErr, errors.Wrap(publishErr.Err(), "failed to publish event to redis: name=%s, channelName=%s", r.config.Name, r.pubSubTopicName)
 	} else {
@@ -128,7 +152,12 @@ func (r *redisCacheImpl) Publish(ctx context.Context, data gox.StringObjectMap) 
 func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.SubscribeCallbackFunc) error {
 
 	// Wait for confirmation that subscription is created before publishing anything.
-	pubSub := r.redisClient.Subscribe(ctx, r.pubSubTopicName)
+	var pubSub *redis.PubSub
+	if r.redisClient != nil {
+		pubSub = r.redisClient.Subscribe(ctx, r.pubSubTopicName)
+	} else {
+		pubSub = r.redisClusterClient.Subscribe(ctx, r.pubSubTopicName)
+	}
 	_, err := pubSub.Receive(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to setup subscribe in redis: name=%s, channelName=%s", r.config.Name, r.pubSubTopicName)
@@ -178,7 +207,11 @@ func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.Subscr
 func (r *redisCacheImpl) Close() error {
 	var err error
 	r.closeDoOnce.Do(func() {
-		err = r.redisClient.Close()
+		if r.redisClient != nil {
+			err = r.redisClient.Close()
+		} else {
+			err = r.redisClusterClient.Close()
+		}
 		r.closed = true
 	})
 	return err
@@ -189,7 +222,11 @@ func (r *redisCacheImpl) buildKeyName(key string) string {
 }
 
 func (r *redisCacheImpl) Ping(ctx context.Context) (string, error) {
-	return r.redisClient.Ping(ctx).Result()
+	if r.redisClient != nil {
+		return r.redisClient.Ping(ctx).Result()
+	} else {
+		return r.redisClusterClient.Ping(ctx).Result()
+	}
 }
 
 func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cache, error) {
@@ -222,11 +259,22 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 		getTimeoutMs:    config.Properties.IntOrDefault("get_timeout_ms", 10),
 	}
 
-	c.redisClient = redis.NewClient(&redis.Options{
-		Addr:     config.Endpoint,
-		Password: config.Properties.StringOrEmpty("password"),
-		DB:       config.Properties.IntOrZero("db"),
-	})
+	if config.Clustered {
+		c.redisClusterClient = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:        []string{config.Endpoint},
+			MaxRedirects: 10,
+			Username:     config.Properties.StringOrEmpty("user"),
+			Password:     config.Properties.StringOrEmpty("password"),
+			ReadTimeout:  time.Duration(config.Properties.IntOrDefault("read_timeout", 100)) * time.Millisecond,
+			WriteTimeout: time.Duration(config.Properties.IntOrDefault("write_timeout", 100)) * time.Millisecond,
+		})
+	} else {
+		c.redisClient = redis.NewClient(&redis.Options{
+			Addr:     config.Endpoint,
+			Password: config.Properties.StringOrEmpty("password"),
+			DB:       config.Properties.IntOrZero("db"),
+		})
+	}
 
 	return c, nil
 }

@@ -8,10 +8,13 @@ import (
 	goxCache "github.com/devlibx/gox-cache"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 	"testing"
 	"time"
-	"go.uber.org/goleak"
 )
+
+var endpoint = "localhost:6379"
+var clustered = true
 
 func TestRedisCache(t *testing.T) {
 	defer goleak.VerifyNone(t)
@@ -20,13 +23,14 @@ func TestRedisCache(t *testing.T) {
 	c, err := NewRedisCache(cf, &goxCache.Config{
 		Name:       "dummy",
 		Type:       "redis",
-		Endpoint:   "localhost:6379",
-		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
+		Endpoint:   endpoint,
+		Clustered:  clustered,
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
 	})
 	assert.NoError(t, err)
 	defer c.Close()
 
-	ctx, cn := context.WithTimeout(context.Background(), time.Second)
+	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cn()
 
 	result, err := c.IsRunning(ctx)
@@ -51,8 +55,9 @@ func TestRedisCache_Ttl(t *testing.T) {
 	c, err := NewRedisCache(cf, &goxCache.Config{
 		Name:       "dummy",
 		Type:       "redis",
-		Endpoint:   "localhost:6379",
-		Properties: map[string]interface{}{"prefix": "TestRedisCache_Ttl_" + id},
+		Endpoint:   endpoint,
+		Clustered:  clustered,
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_Ttl_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
 	})
 	assert.NoError(t, err)
 	defer c.Close()
@@ -91,13 +96,14 @@ func TestRedisCache_PubSub(t *testing.T) {
 	c, err := NewRedisCache(cf, &goxCache.Config{
 		Name:       "dummy",
 		Type:       "redis",
-		Endpoint:   "localhost:6379",
-		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id},
+		Endpoint:   endpoint,
+		Clustered:  clustered,
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
 	})
 	assert.NoError(t, err)
 	defer c.Close()
 
-	ctx, cn := context.WithTimeout(context.Background(), time.Second)
+	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cn()
 
 	result, err := c.IsRunning(ctx)
@@ -127,4 +133,38 @@ func TestRedisCache_PubSub(t *testing.T) {
 	<-ctx1.Done()
 	assert.True(t, gotMessage)
 
+}
+
+func BenchmarkPutGet(t *testing.B) {
+	// defer goleak.VerifyNone(t)
+	id := uuid.NewString()
+	cf, _ := test.MockCf(t)
+	c, err := NewRedisCache(cf, &goxCache.Config{
+		Name:       "dummy",
+		Type:       "redis",
+		Endpoint:   endpoint,
+		Clustered:  clustered,
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
+	})
+	assert.NoError(t, err)
+	defer c.Close()
+
+	ctx, cn := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cn()
+
+	result, err := c.IsRunning(ctx)
+	if err != nil {
+		t.Skip("redis is not running, skip this test: result=", result)
+		return
+	}
+	fmt.Println("redis is running: result", result)
+
+	for i := 0; i < t.N; i++ {
+		_, err = c.Put(ctx, id, "value_"+id, 0)
+		assert.NoError(t, err)
+
+		valueOfKey, _, err := c.Get(ctx, id)
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("value_"+id), valueOfKey)
+	}
 }
