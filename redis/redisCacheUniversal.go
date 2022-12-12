@@ -3,6 +3,10 @@ package redisCache
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 	"github.com/devlibx/gox-base/metrics"
@@ -11,9 +15,6 @@ import (
 	goxCache "github.com/devlibx/gox-cache"
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
-	"strings"
-	"sync"
-	"time"
 )
 
 // NewUniversalClient
@@ -77,6 +78,30 @@ func (r *universalRedisCacheImpl) Put(ctx context.Context, key string, data inte
 	}
 }
 
+func (r *universalRedisCacheImpl) MPut(ctx context.Context, dataMap map[string]interface{}) error {
+	t := r.putTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.putTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	prefixedDataMap, allKeys, internalKeysToStore := r.buildMapForMultiPut(dataMap)
+
+	var status *redis.StatusCmd
+	status = r.redisClient.MSet(ctxWithTimeout, prefixedDataMap)
+
+	result, err := status.Result()
+
+	if err != nil {
+		r.putCounterError.Inc(1)
+		return errors.Wrap(err, "failed to put keys in cache name=%s, key=%v, internalKeyUsedToStore=%v", r.config.Name, allKeys, internalKeysToStore)
+	} else {
+		r.putCounter.Inc(1)
+		r.logger.Debug("key stored in cache", zap.String("name", r.config.Name), zap.Any("keys", allKeys), zap.String("result", result))
+		return nil
+	}
+}
+
 func (r *universalRedisCacheImpl) Get(ctx context.Context, key string) (interface{}, string, error) {
 	t := r.getTimer.Start()
 	defer t.Stop()
@@ -94,6 +119,30 @@ func (r *universalRedisCacheImpl) Get(ctx context.Context, key string) (interfac
 		r.logger.Debug("got key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore), zap.ByteString("result", result))
 		return result, keyToStore, nil
 	}
+}
+
+func (r *universalRedisCacheImpl) MGet(ctx context.Context, keys []string) ([]interface{}, []string, error) {
+	t := r.getTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	keysToStore := []string{}
+	for _, key := range keys {
+		keysToStore = append(keysToStore, r.buildKeyName(key))
+	}
+
+	result, err := r.redisClient.MGet(ctxWithTimeout, keysToStore...).Result()
+	if err != nil {
+		r.getCounterError.Inc(1)
+		return nil, keysToStore, errors.Wrap(err, "failed to get key from cache: name=%s, key=%v, internalKeyUsedToStore=%v", r.config.Name, keys, keysToStore)
+	} else {
+		r.getCounter.Inc(1)
+		r.logger.Debug("got keys from cache", zap.String("name", r.config.Name), zap.Any("key", keys), zap.Any("internalKeysUsedToStore", keysToStore), zap.Any("result", result))
+		return result, keysToStore, nil
+	}
+
 }
 
 func (r *universalRedisCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
@@ -187,6 +236,19 @@ func (r *universalRedisCacheImpl) Close() error {
 
 func (r *universalRedisCacheImpl) buildKeyName(key string) string {
 	return fmt.Sprintf("%s_%s", r.prefix, key)
+}
+
+func (r *universalRedisCacheImpl) buildMapForMultiPut(dataMap map[string]interface{}) (map[string]interface{}, []string, []string) {
+	prefixedDataMap := map[string]interface{}{}
+	var allKeys []string
+	var internalKeysToStore []string
+	for key, value := range dataMap {
+		internalKeyToStore := r.buildKeyName(key)
+		prefixedDataMap[internalKeyToStore] = value
+		allKeys = append(allKeys, key)
+		internalKeysToStore = append(internalKeysToStore, internalKeyToStore)
+	}
+	return prefixedDataMap, allKeys, internalKeysToStore
 }
 
 func (r *universalRedisCacheImpl) Ping(ctx context.Context) (string, error) {
