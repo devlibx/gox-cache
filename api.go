@@ -3,6 +3,7 @@ package goxCache
 import (
 	"context"
 	"fmt"
+
 	"github.com/devlibx/gox-base"
 	"github.com/devlibx/gox-base/errors"
 )
@@ -50,8 +51,14 @@ type Cache interface {
 	// Put a key with given name. TTL=0 means never expire
 	Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error)
 
+	// Put multiple key,value pairs with given name. No TTL supported
+	MPut(ctx context.Context, dataMap map[string]interface{}) error
+
 	// Get data for given key
 	Get(ctx context.Context, key string) (interface{}, string, error)
+
+	// Get data for a list of keys
+	MGet(ctx context.Context, keys []string) ([]interface{}, []string, error)
 
 	// Get data for given key and convert it to StringObjectMap before returning it
 	// Error will be returned if key is not found or if value cannot be converted to StringObjectMap
