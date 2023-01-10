@@ -59,7 +59,7 @@ func (r *universalRedisCacheImpl) Put(ctx context.Context, key string, data inte
 	defer cf()
 
 	var ttl time.Duration
-	if ttlInSec > 0 {
+	if ttlInSec <= 0 {
 		ttl = 100000 * time.Hour
 	} else {
 		ttl = time.Duration(ttlInSec) * time.Second
