@@ -74,6 +74,12 @@ type Cache interface {
 	Close() error
 }
 
+type Redis interface {
+	Cache
+	PFAdd(ctx context.Context, key string, els ...interface{}) (string, error)
+	PFCount(ctx context.Context, keys ...string) (int64, []string, error)
+}
+
 type Registry interface {
 
 	// Register a new cache with given config
