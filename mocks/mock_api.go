@@ -111,6 +111,36 @@ func (mr *MockCacheMockRecorder) IsRunning(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockCache)(nil).IsRunning), ctx)
 }
 
+// MGet mocks base method.
+func (m *MockCache) MGet(ctx context.Context, keys []string) ([]interface{}, []string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MGet", ctx, keys)
+	ret0, _ := ret[0].([]interface{})
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// MGet indicates an expected call of MGet.
+func (mr *MockCacheMockRecorder) MGet(ctx, keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MGet", reflect.TypeOf((*MockCache)(nil).MGet), ctx, keys)
+}
+
+// MPut mocks base method.
+func (m *MockCache) MPut(ctx context.Context, dataMap map[string]interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MPut", ctx, dataMap)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MPut indicates an expected call of MPut.
+func (mr *MockCacheMockRecorder) MPut(ctx, dataMap interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MPut", reflect.TypeOf((*MockCache)(nil).MPut), ctx, dataMap)
+}
+
 // Publish mocks base method.
 func (m *MockCache) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
 	m.ctrl.T.Helper()
@@ -153,6 +183,219 @@ func (m *MockCache) Subscribe(ctx context.Context, callback goxCache.SubscribeCa
 func (mr *MockCacheMockRecorder) Subscribe(ctx, callback interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockCache)(nil).Subscribe), ctx, callback)
+}
+
+// MockRedis is a mock of Redis interface.
+type MockRedis struct {
+	ctrl     *gomock.Controller
+	recorder *MockRedisMockRecorder
+}
+
+// MockRedisMockRecorder is the mock recorder for MockRedis.
+type MockRedisMockRecorder struct {
+	mock *MockRedis
+}
+
+// NewMockRedis creates a new mock instance.
+func NewMockRedis(ctrl *gomock.Controller) *MockRedis {
+	mock := &MockRedis{ctrl: ctrl}
+	mock.recorder = &MockRedisMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRedis) EXPECT() *MockRedisMockRecorder {
+	return m.recorder
+}
+
+// Close mocks base method.
+func (m *MockRedis) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockRedisMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockRedis)(nil).Close))
+}
+
+// Get mocks base method.
+func (m *MockRedis) Get(ctx context.Context, key string) (interface{}, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Get", ctx, key)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Get indicates an expected call of Get.
+func (mr *MockRedisMockRecorder) Get(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRedis)(nil).Get), ctx, key)
+}
+
+// GetAsMap mocks base method.
+func (m *MockRedis) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAsMap", ctx, key)
+	ret0, _ := ret[0].(gox.StringObjectMap)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetAsMap indicates an expected call of GetAsMap.
+func (mr *MockRedisMockRecorder) GetAsMap(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAsMap", reflect.TypeOf((*MockRedis)(nil).GetAsMap), ctx, key)
+}
+
+// IsEnabled mocks base method.
+func (m *MockRedis) IsEnabled() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsEnabled")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsEnabled indicates an expected call of IsEnabled.
+func (mr *MockRedisMockRecorder) IsEnabled() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEnabled", reflect.TypeOf((*MockRedis)(nil).IsEnabled))
+}
+
+// IsRunning mocks base method.
+func (m *MockRedis) IsRunning(ctx context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsRunning", ctx)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsRunning indicates an expected call of IsRunning.
+func (mr *MockRedisMockRecorder) IsRunning(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockRedis)(nil).IsRunning), ctx)
+}
+
+// MGet mocks base method.
+func (m *MockRedis) MGet(ctx context.Context, keys []string) ([]interface{}, []string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MGet", ctx, keys)
+	ret0, _ := ret[0].([]interface{})
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// MGet indicates an expected call of MGet.
+func (mr *MockRedisMockRecorder) MGet(ctx, keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MGet", reflect.TypeOf((*MockRedis)(nil).MGet), ctx, keys)
+}
+
+// MPut mocks base method.
+func (m *MockRedis) MPut(ctx context.Context, dataMap map[string]interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MPut", ctx, dataMap)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MPut indicates an expected call of MPut.
+func (mr *MockRedisMockRecorder) MPut(ctx, dataMap interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MPut", reflect.TypeOf((*MockRedis)(nil).MPut), ctx, dataMap)
+}
+
+// PFAdd mocks base method.
+func (m *MockRedis) PFAdd(ctx context.Context, key string, els ...interface{}) (string, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, key}
+	for _, a := range els {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFAdd", varargs...)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PFAdd indicates an expected call of PFAdd.
+func (mr *MockRedisMockRecorder) PFAdd(ctx, key interface{}, els ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, key}, els...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFAdd", reflect.TypeOf((*MockRedis)(nil).PFAdd), varargs...)
+}
+
+// PFCount mocks base method.
+func (m *MockRedis) PFCount(ctx context.Context, keys ...string) (int64, []string, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range keys {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PFCount", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PFCount indicates an expected call of PFCount.
+func (mr *MockRedisMockRecorder) PFCount(ctx interface{}, keys ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, keys...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFCount", reflect.TypeOf((*MockRedis)(nil).PFCount), varargs...)
+}
+
+// Publish mocks base method.
+func (m *MockRedis) Publish(ctx context.Context, data gox.StringObjectMap) (interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Publish", ctx, data)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Publish indicates an expected call of Publish.
+func (mr *MockRedisMockRecorder) Publish(ctx, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockRedis)(nil).Publish), ctx, data)
+}
+
+// Put mocks base method.
+func (m *MockRedis) Put(ctx context.Context, key string, data interface{}, ttlInSec int) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Put", ctx, key, data, ttlInSec)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Put indicates an expected call of Put.
+func (mr *MockRedisMockRecorder) Put(ctx, key, data, ttlInSec interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockRedis)(nil).Put), ctx, key, data, ttlInSec)
+}
+
+// Subscribe mocks base method.
+func (m *MockRedis) Subscribe(ctx context.Context, callback goxCache.SubscribeCallbackFunc) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Subscribe", ctx, callback)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Subscribe indicates an expected call of Subscribe.
+func (mr *MockRedisMockRecorder) Subscribe(ctx, callback interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockRedis)(nil).Subscribe), ctx, callback)
 }
 
 // MockRegistry is a mock of Registry interface.
