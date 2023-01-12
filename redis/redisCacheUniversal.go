@@ -145,6 +145,48 @@ func (r *universalRedisCacheImpl) MGet(ctx context.Context, keys []string) ([]in
 
 }
 
+func (r *universalRedisCacheImpl) PFAdd(ctx context.Context, key string, els ...interface{}) (string, error) {
+	t := r.getTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	_, err := r.redisClient.PFAdd(ctxWithTimeout, key, els...).Result()
+	if err != nil {
+		r.getCounterError.Inc(1)
+		return key, errors.Wrap(err, "failed to put PFAdd to cache: name=%s, key=%s", r.config.Name, key)
+	} else {
+		r.getCounter.Inc(1)
+		r.logger.Debug("pushed PFAdd into cache", zap.String("name", r.config.Name), zap.String("key", key))
+		return key, nil
+	}
+}
+
+func (r *universalRedisCacheImpl) PFCount(ctx context.Context, keys ...string) (int64, []string, error) {
+	t := r.getTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	result, err := r.redisClient.PFCount(ctxWithTimeout, keys...).Result()
+	if err != nil {
+		r.getCounterError.Inc(1)
+		return 0, keys, errors.Wrap(err, "failed to get  PFCount to cache: name=%s, keys=%s",
+			r.config.Name,
+			strings.Join(keys, ","),
+		)
+	} else {
+		r.getCounter.Inc(1)
+		r.logger.Debug("get PFCount into cache",
+			zap.String("name", r.config.Name),
+			zap.String("keys", strings.Join(keys, ",")),
+		)
+		return result, keys, nil
+	}
+}
+
 func (r *universalRedisCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObjectMap, string, error) {
 	data, keyToStore, err := r.Get(ctx, key)
 	if err != nil {
@@ -255,7 +297,7 @@ func (r *universalRedisCacheImpl) Ping(ctx context.Context) (string, error) {
 	return r.redisClient.Ping(ctx).Result()
 }
 
-func NewRedisCacheV1(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cache, error) {
+func NewRedisCacheV1(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Redis, error) {
 	if config.Properties == nil {
 		config.Properties = gox.StringObjectMap{}
 	}

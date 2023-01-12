@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var endpointV1 = "localhost:6379"
+var endpointV1 = "127.0.0.1:6379"
 
 func TestRedisCacheV1(t *testing.T) {
 	defer goleak.VerifyNone(t)
@@ -28,7 +28,7 @@ func TestRedisCacheV1(t *testing.T) {
 	assert.NoError(t, err)
 	defer c.Close()
 
-	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cn := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cn()
 
 	result, err := c.IsRunning(ctx)
@@ -59,7 +59,7 @@ func TestRedisCache_Ttl_V1(t *testing.T) {
 	assert.NoError(t, err)
 	defer c.Close()
 
-	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cn := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cn()
 
 	result, err := c.IsRunning(ctx)
@@ -85,6 +85,44 @@ func TestRedisCache_Ttl_V1(t *testing.T) {
 
 }
 
+func TestRedisCache_HyperLogLog_V1(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	id := uuid.NewString()
+	cf, _ := test.MockCf(t)
+	c, err := NewRedisCacheV1(cf, &goxCache.Config{
+		Name:       "dummy",
+		Type:       "redis",
+		Endpoints:  []string{endpointV1, endpointV1},
+		Properties: map[string]interface{}{"prefix": "TestRedisCache_HyperLogLog_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
+	})
+	assert.NoError(t, err)
+	defer c.Close()
+
+	ctx, cn := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cn()
+
+	result, err := c.IsRunning(ctx)
+	if err != nil {
+		t.Skip("redis is not running, skip this test: result=", result)
+		return
+	}
+	fmt.Println("redis is running: result", result)
+
+	_, err = c.PFAdd(ctx, id, "value1_"+id)
+	assert.NoError(t, err)
+	_, err = c.PFAdd(ctx, id, "value2_"+id)
+	assert.NoError(t, err)
+	_, err = c.PFAdd(ctx, id, "value1_"+id)
+	assert.NoError(t, err)
+
+	for i := 0; i < 20; i++ {
+		time.Sleep(1 * time.Second)
+		count, _, notFoundError := c.PFCount(ctx, id)
+		assert.NoError(t, notFoundError)
+		assert.Equal(t, int64(2), count)
+	}
+}
+
 func TestRedisCache_PubSub_V1(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
@@ -99,7 +137,7 @@ func TestRedisCache_PubSub_V1(t *testing.T) {
 	assert.NoError(t, err)
 	defer c.Close()
 
-	ctx, cn := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cn := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cn()
 
 	result, err := c.IsRunning(ctx)
