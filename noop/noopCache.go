@@ -69,6 +69,14 @@ func (n noOpCacheImpl) GetAsMap(ctx context.Context, key string) (gox.StringObje
 	}
 }
 
+func (n noOpCacheImpl) Delete(ctx context.Context, key string) error {
+	return &goxCache.CacheError{
+		Err:       goxCache.ErrNoOpCacheError,
+		Message:   fmt.Sprintf("[expected error] key not found in  NOOP cache: key=%s", key),
+		ErrorCode: "no_op_cache",
+	}
+}
+
 func (n noOpCacheImpl) Close() error {
 	return nil
 }

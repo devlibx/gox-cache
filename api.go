@@ -70,6 +70,9 @@ type Cache interface {
 	// Subscribe to data in this cache
 	Subscribe(ctx context.Context, callback SubscribeCallbackFunc) error
 
+	// Delete a key from this cache
+	Delete(ctx context.Context, key string) error
+
 	// Close and shutdown underlying connections
 	Close() error
 }

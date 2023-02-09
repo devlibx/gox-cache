@@ -34,6 +34,8 @@ type redisCacheImpl struct {
 	putTimer           metrics.Timer
 	getCounter         metrics.Counter
 	getCounterError    metrics.Counter
+	deleteCounter      metrics.Counter
+	deleteCounterError metrics.Counter
 	getTimer           metrics.Timer
 }
 
@@ -261,6 +263,32 @@ func (r *redisCacheImpl) Subscribe(ctx context.Context, callback goxCache.Subscr
 	return nil
 }
 
+func (r *redisCacheImpl) Delete(ctx context.Context, key string) error {
+	t := r.getTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	keyToStore := r.buildKeyName(key)
+
+	var err error
+	if r.redisClient != nil {
+		err = r.redisClient.Del(ctxWithTimeout, keyToStore).Err()
+	} else {
+		err = r.redisClusterClient.Del(ctxWithTimeout, keyToStore).Err()
+	}
+
+	if err != nil {
+		r.deleteCounterError.Inc(1)
+		return errors.Wrap(err, "failed to delete key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
+	} else {
+		r.deleteCounter.Inc(1)
+		r.logger.Debug("deleted key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore))
+		return nil
+	}
+}
+
 func (r *redisCacheImpl) Close() error {
 	var err error
 	r.closeDoOnce.Do(func() {
@@ -313,20 +341,22 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 	}
 
 	c := &redisCacheImpl{
-		CrossFunction:   cf,
-		config:          config,
-		closeDoOnce:     sync.Once{},
-		logger:          cf.Logger().Named("cache.redis").Named(config.Name).Named(prefix),
-		pubSubTopicName: fmt.Sprintf("%s_%s_%s", prefix, config.Name, "pub_sub_topic"),
-		prefix:          prefix,
-		putCounter:      cf.Metric().Counter(prefix + "_put"),
-		putCounterError: cf.Metric().Counter(prefix + "_put_error"),
-		putTimer:        cf.Metric().Timer(prefix + "_put_time"),
-		getCounter:      cf.Metric().Counter(prefix + "_get"),
-		getCounterError: cf.Metric().Counter(prefix + "_get_error"),
-		getTimer:        cf.Metric().Timer(prefix + "_get_time"),
-		putTimeoutMs:    config.Properties.IntOrDefault("put_timeout_ms", 10),
-		getTimeoutMs:    config.Properties.IntOrDefault("get_timeout_ms", 10),
+		CrossFunction:      cf,
+		config:             config,
+		closeDoOnce:        sync.Once{},
+		logger:             cf.Logger().Named("cache.redis").Named(config.Name).Named(prefix),
+		pubSubTopicName:    fmt.Sprintf("%s_%s_%s", prefix, config.Name, "pub_sub_topic"),
+		prefix:             prefix,
+		putCounter:         cf.Metric().Counter(prefix + "_put"),
+		putCounterError:    cf.Metric().Counter(prefix + "_put_error"),
+		putTimer:           cf.Metric().Timer(prefix + "_put_time"),
+		getCounter:         cf.Metric().Counter(prefix + "_get"),
+		getCounterError:    cf.Metric().Counter(prefix + "_get_error"),
+		deleteCounter:      cf.Metric().Counter(prefix + "_delete"),
+		deleteCounterError: cf.Metric().Counter(prefix + "_delete_error"),
+		getTimer:           cf.Metric().Timer(prefix + "_get_time"),
+		putTimeoutMs:       config.Properties.IntOrDefault("put_timeout_ms", 10),
+		getTimeoutMs:       config.Properties.IntOrDefault("get_timeout_ms", 10),
 	}
 
 	if config.Clustered {

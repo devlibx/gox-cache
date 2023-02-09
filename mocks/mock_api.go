@@ -50,6 +50,20 @@ func (mr *MockCacheMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockCache)(nil).Close))
 }
 
+// Delete mocks base method.
+func (m *MockCache) Delete(ctx context.Context, key string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockCacheMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCache)(nil).Delete), ctx, key)
+}
+
 // Get mocks base method.
 func (m *MockCache) Get(ctx context.Context, key string) (interface{}, string, error) {
 	m.ctrl.T.Helper()
