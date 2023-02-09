@@ -50,6 +50,20 @@ func (mr *MockCacheMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockCache)(nil).Close))
 }
 
+// Delete mocks base method.
+func (m *MockCache) Delete(ctx context.Context, key string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockCacheMockRecorder) Delete(ctx, key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCache)(nil).Delete), ctx, key)
+}
+
 // Get mocks base method.
 func (m *MockCache) Get(ctx context.Context, key string) (interface{}, string, error) {
 	m.ctrl.T.Helper()
@@ -109,6 +123,36 @@ func (m *MockCache) IsRunning(ctx context.Context) (bool, error) {
 func (mr *MockCacheMockRecorder) IsRunning(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRunning", reflect.TypeOf((*MockCache)(nil).IsRunning), ctx)
+}
+
+// MGet mocks base method.
+func (m *MockCache) MGet(ctx context.Context, keys []string) ([]interface{}, []string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MGet", ctx, keys)
+	ret0, _ := ret[0].([]interface{})
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// MGet indicates an expected call of MGet.
+func (mr *MockCacheMockRecorder) MGet(ctx, keys interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MGet", reflect.TypeOf((*MockCache)(nil).MGet), ctx, keys)
+}
+
+// MPut mocks base method.
+func (m *MockCache) MPut(ctx context.Context, dataMap map[string]interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MPut", ctx, dataMap)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MPut indicates an expected call of MPut.
+func (mr *MockCacheMockRecorder) MPut(ctx, dataMap interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MPut", reflect.TypeOf((*MockCache)(nil).MPut), ctx, dataMap)
 }
 
 // Publish mocks base method.

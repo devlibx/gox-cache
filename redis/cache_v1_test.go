@@ -44,6 +44,11 @@ func TestRedisCacheV1(t *testing.T) {
 	valueOfKey, _, err := c.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
+
+	err = c.Delete(ctx, id)
+	assert.NoError(t, err)
+	valueOfKey, _, err = c.Get(ctx, id)
+	assert.Error(t, err)
 }
 
 func TestRedisCache_Ttl_V1(t *testing.T) {

@@ -81,4 +81,14 @@ func TestRegistry(t *testing.T) {
 	assert.Equal(t, "value_"+id, values[0])
 	assert.Equal(t, "value_"+id2, values[1])
 	assert.Equal(t, "value_"+id3, values[2])
+
+	// Delete Data
+	err = redisCacheObject.Delete(ctx, id)
+	assert.NoError(t, err)
+	values, _, err = redisCacheObject.MGet(ctx, []string{id, id2, id3})
+	assert.NoError(t, err)
+	assert.Len(t, values, 3)
+	assert.Nil(t, nil)
+	assert.Equal(t, "value_"+id2, values[1])
+	assert.Equal(t, "value_"+id3, values[2])
 }

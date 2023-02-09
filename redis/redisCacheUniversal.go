@@ -20,21 +20,23 @@ import (
 // NewUniversalClient
 type universalRedisCacheImpl struct {
 	gox.CrossFunction
-	config          *goxCache.Config
-	putTimeoutMs    int
-	getTimeoutMs    int
-	redisClient     redis.UniversalClient
-	pubSubTopicName string
-	closeDoOnce     sync.Once
-	closed          bool
-	logger          *zap.Logger
-	prefix          string
-	putCounter      metrics.Counter
-	putCounterError metrics.Counter
-	putTimer        metrics.Timer
-	getCounter      metrics.Counter
-	getCounterError metrics.Counter
-	getTimer        metrics.Timer
+	config             *goxCache.Config
+	putTimeoutMs       int
+	getTimeoutMs       int
+	redisClient        redis.UniversalClient
+	pubSubTopicName    string
+	closeDoOnce        sync.Once
+	closed             bool
+	logger             *zap.Logger
+	prefix             string
+	putCounter         metrics.Counter
+	putCounterError    metrics.Counter
+	putTimer           metrics.Timer
+	getCounter         metrics.Counter
+	getCounterError    metrics.Counter
+	deleteCounter      metrics.Counter
+	deleteCounterError metrics.Counter
+	getTimer           metrics.Timer
 }
 
 func (r *universalRedisCacheImpl) IsEnabled() bool {
@@ -225,6 +227,26 @@ func (r *universalRedisCacheImpl) Subscribe(ctx context.Context, callback goxCac
 	return nil
 }
 
+func (r *universalRedisCacheImpl) Delete(ctx context.Context, key string) error {
+	t := r.getTimer.Start()
+	defer t.Stop()
+
+	ctxWithTimeout, cf := context.WithTimeout(ctx, time.Duration(r.getTimeoutMs)*time.Millisecond)
+	defer cf()
+
+	keyToStore := r.buildKeyName(key)
+
+	err := r.redisClient.Del(ctxWithTimeout, keyToStore).Err()
+	if err != nil {
+		r.deleteCounterError.Inc(1)
+		return errors.Wrap(err, "failed to delete key from cache: name=%s, key=%s, internalKeyUsedToStore=%s", r.config.Name, key, keyToStore)
+	} else {
+		r.deleteCounter.Inc(1)
+		r.logger.Debug("deleted key from cache", zap.String("name", r.config.Name), zap.String("key", key), zap.String("internalKeyUsedToStore", keyToStore))
+		return nil
+	}
+}
+
 func (r *universalRedisCacheImpl) Close() error {
 	var err error
 	r.closeDoOnce.Do(func() {
@@ -269,20 +291,22 @@ func NewRedisCacheV1(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Ca
 	}
 
 	c := &universalRedisCacheImpl{
-		CrossFunction:   cf,
-		config:          config,
-		closeDoOnce:     sync.Once{},
-		logger:          cf.Logger().Named("cache.redis").Named(config.Name).Named(prefix),
-		pubSubTopicName: fmt.Sprintf("%s_%s_%s", prefix, config.Name, "pub_sub_topic"),
-		prefix:          prefix,
-		putCounter:      cf.Metric().Counter(prefix + "_put"),
-		putCounterError: cf.Metric().Counter(prefix + "_put_error"),
-		putTimer:        cf.Metric().Timer(prefix + "_put_time"),
-		getCounter:      cf.Metric().Counter(prefix + "_get"),
-		getCounterError: cf.Metric().Counter(prefix + "_get_error"),
-		getTimer:        cf.Metric().Timer(prefix + "_get_time"),
-		putTimeoutMs:    config.Properties.IntOrDefault("put_timeout_ms", 10),
-		getTimeoutMs:    config.Properties.IntOrDefault("get_timeout_ms", 10),
+		CrossFunction:      cf,
+		config:             config,
+		closeDoOnce:        sync.Once{},
+		logger:             cf.Logger().Named("cache.redis").Named(config.Name).Named(prefix),
+		pubSubTopicName:    fmt.Sprintf("%s_%s_%s", prefix, config.Name, "pub_sub_topic"),
+		prefix:             prefix,
+		putCounter:         cf.Metric().Counter(prefix + "_put"),
+		putCounterError:    cf.Metric().Counter(prefix + "_put_error"),
+		putTimer:           cf.Metric().Timer(prefix + "_put_time"),
+		getCounter:         cf.Metric().Counter(prefix + "_get"),
+		getCounterError:    cf.Metric().Counter(prefix + "_get_error"),
+		deleteCounter:      cf.Metric().Counter(prefix + "_delete"),
+		deleteCounterError: cf.Metric().Counter(prefix + "_delete_error"),
+		getTimer:           cf.Metric().Timer(prefix + "_get_time"),
+		putTimeoutMs:       config.Properties.IntOrDefault("put_timeout_ms", 10),
+		getTimeoutMs:       config.Properties.IntOrDefault("get_timeout_ms", 10),
 	}
 
 	addresses := make([]string, 0)
