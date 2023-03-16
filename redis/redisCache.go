@@ -330,7 +330,7 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 		getTimeoutMs:    config.Properties.IntOrDefault("get_timeout_ms", 10),
 	}
 
-	if config.Clustered {
+	if config.Clustered && config.TlsEnabled {
 		c.redisClusterClient = redis.NewClusterClient(&redis.ClusterOptions{
 			Addrs:        []string{config.Endpoint},
 			MaxRedirects: 10,
@@ -339,9 +339,17 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 			ReadTimeout:  time.Duration(config.Properties.IntOrDefault("read_timeout", 100)) * time.Millisecond,
 			WriteTimeout: time.Duration(config.Properties.IntOrDefault("write_timeout", 100)) * time.Millisecond,
 			TLSConfig: &tls.Config{
-				MinVersion:         tls.VersionTLS10,
 				InsecureSkipVerify: true,
 			},
+		})
+	} else if config.Clustered {
+		c.redisClusterClient = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:        []string{config.Endpoint},
+			MaxRedirects: 10,
+			Username:     config.Properties.StringOrEmpty("user"),
+			Password:     config.Properties.StringOrEmpty("password"),
+			ReadTimeout:  time.Duration(config.Properties.IntOrDefault("read_timeout", 100)) * time.Millisecond,
+			WriteTimeout: time.Duration(config.Properties.IntOrDefault("write_timeout", 100)) * time.Millisecond,
 		})
 	} else {
 		c.redisClient = redis.NewClient(&redis.Options{
