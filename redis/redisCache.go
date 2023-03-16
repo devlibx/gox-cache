@@ -2,6 +2,7 @@ package redisCache
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"strings"
 	"sync"
@@ -13,7 +14,7 @@ import (
 	"github.com/devlibx/gox-base/serialization"
 	"github.com/devlibx/gox-base/util"
 	goxCache "github.com/devlibx/gox-cache"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -337,6 +338,10 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 			Password:     config.Properties.StringOrEmpty("password"),
 			ReadTimeout:  time.Duration(config.Properties.IntOrDefault("read_timeout", 100)) * time.Millisecond,
 			WriteTimeout: time.Duration(config.Properties.IntOrDefault("write_timeout", 100)) * time.Millisecond,
+			TLSConfig: &tls.Config{
+				MinVersion:         tls.VersionTLS10,
+				InsecureSkipVerify: true,
+			},
 		})
 	} else {
 		c.redisClient = redis.NewClient(&redis.Options{
