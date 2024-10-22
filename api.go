@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
 )
 
 //go:generate mockgen -source=api.go -destination=./mocks/mock_api.go -package=mockGoxCache

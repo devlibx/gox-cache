@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-base/metrics"
-	"github.com/devlibx/gox-base/serialization"
-	"github.com/devlibx/gox-base/util"
-	goxCache "github.com/devlibx/gox-cache"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	"github.com/devlibx/gox-base/v2/metrics"
+	"github.com/devlibx/gox-base/v2/serialization"
+	"github.com/devlibx/gox-base/v2/util"
+	goxCache "github.com/devlibx/gox-cache/v2"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )

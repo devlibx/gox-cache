@@ -2,11 +2,11 @@ package cache
 
 import (
 	"context"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/errors"
-	"github.com/devlibx/gox-cache"
-	noopCache "github.com/devlibx/gox-cache/noop"
-	redisCache "github.com/devlibx/gox-cache/redis"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/errors"
+	goxCache "github.com/devlibx/gox-cache/v2"
+	noopCache "github.com/devlibx/gox-cache/v2/noop"
+	redisCache "github.com/devlibx/gox-cache/v2/redis"
 	"go.uber.org/zap"
 	"strings"
 	"sync"

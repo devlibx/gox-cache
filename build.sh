@@ -1,3 +1,4 @@
+go install go.uber.org/mock/mockgen@latest
 go mod tidy
 go generate ./...
 go fmt ./..

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/devlibx/gox-base"
-	goxCache "github.com/devlibx/gox-cache"
+	"github.com/devlibx/gox-base/v2"
+	goxCache "github.com/devlibx/gox-cache/v2"
 	"go.uber.org/zap"
 )
 

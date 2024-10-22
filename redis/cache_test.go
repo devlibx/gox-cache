@@ -3,9 +3,9 @@ package redisCache
 import (
 	"context"
 	"fmt"
-	"github.com/devlibx/gox-base"
-	"github.com/devlibx/gox-base/test"
-	goxCache "github.com/devlibx/gox-cache"
+	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/test"
+	goxCache "github.com/devlibx/gox-cache/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
