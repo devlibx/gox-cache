@@ -336,7 +336,11 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 	// Set prefix key
 	prefix := ""
 	if !util.IsStringEmpty(config.Prefix) {
-		prefix = config.Prefix + "_" + config.Properties.StringOrDefault("prefix", "default")
+		if config.Properties.StringOrDefault("prefix", "default") == "__NO_PREFIX__" {
+			prefix = config.Prefix
+		} else {
+			prefix = config.Prefix + "_" + config.Properties.StringOrDefault("prefix", "default")
+		}
 	} else {
 		prefix = config.Properties.StringOrDefault("prefix", "default")
 	}
