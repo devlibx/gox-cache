@@ -384,6 +384,9 @@ func NewRedisCache(cf gox.CrossFunction, config *goxCache.Config) (goxCache.Cach
 			Password:     config.Properties.StringOrEmpty("password"),
 			ReadTimeout:  time.Duration(config.Properties.IntOrDefault("read_timeout", 100)) * time.Millisecond,
 			WriteTimeout: time.Duration(config.Properties.IntOrDefault("write_timeout", 100)) * time.Millisecond,
+			TLSConfig: &tls.Config{
+				InsecureSkipVerify: config.TlsEnabled,
+			},
 		})
 	} else {
 		c.redisClient = redis.NewClient(&redis.Options{

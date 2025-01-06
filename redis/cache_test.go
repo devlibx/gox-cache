@@ -4,19 +4,28 @@ import (
 	"context"
 	"fmt"
 	"github.com/devlibx/gox-base/v2"
+	"github.com/devlibx/gox-base/v2/serialization"
 	"github.com/devlibx/gox-base/v2/test"
 	goxCache "github.com/devlibx/gox-cache/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
+	"os"
 	"testing"
 	"time"
 )
 
 var endpoint = "localhost:6379"
 var clustered = false
+var tlsVal = false
 
 func TestRedisCache(t *testing.T) {
+	if os.Getenv("REDIS_HOST") != "" {
+		endpoint = os.Getenv("REDIS_HOST")
+		clustered = true
+		tlsVal = true
+	}
+
 	defer goleak.VerifyNone(t)
 	id := uuid.NewString()
 	cf, _ := test.MockCf(t)
@@ -25,7 +34,15 @@ func TestRedisCache(t *testing.T) {
 		Type:       "redis",
 		Endpoint:   endpoint,
 		Clustered:  clustered,
-		Properties: map[string]interface{}{"prefix": "TestRedisCache_" + id, "put_timeout_ms": 1000, "get_timeout_ms": 1000},
+		TlsEnabled: tlsVal,
+		Properties: map[string]interface{}{
+			"prefix":         "TestRedisCache_" + id,
+			"put_timeout_ms": 1000,
+			"get_timeout_ms": 1000,
+			"read_timeout":   1000,
+			"write_timeout":  1000,
+			"password":       os.Getenv("REDIS_PASSWORD"),
+		},
 	})
 	assert.NoError(t, err)
 	defer c.Close()
@@ -43,9 +60,10 @@ func TestRedisCache(t *testing.T) {
 	_, err = c.Put(ctx, id, "value_"+id, 0)
 	assert.NoError(t, err)
 
-	valueOfKey, _, err := c.Get(ctx, id)
+	valueOfKey, actualKeyInRedis, err := c.Get(ctx, id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("value_"+id), valueOfKey)
+	fmt.Println("value=", serialization.StringifySuppressError(valueOfKey, "na"), "actualKeyInRedis=", actualKeyInRedis)
 
 	err = c.Delete(ctx, id)
 	assert.NoError(t, err)
