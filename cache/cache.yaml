@@ -7,3 +7,6 @@ cacheConfig:
       properties:
         put_timeout_ms: 10
         get_timeout_ms: 10
+    testInMemory:
+      prefix: na
+      type: inmemory

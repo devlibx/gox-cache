@@ -91,4 +91,15 @@ func TestRegistry(t *testing.T) {
 	assert.Nil(t, nil)
 	assert.Equal(t, "value_"+id2, values[1])
 	assert.Equal(t, "value_"+id3, values[2])
+
+	inMemoryCacheObject, err := registry.GetCache("testInMemory")
+
+	// Put data in cache - TTL=0 means never expire
+	_, err = inMemoryCacheObject.Put(ctx, id, "value_"+id, 0)
+	assert.NoError(t, err)
+
+	// Get data
+	valueOfKey, _, err = inMemoryCacheObject.Get(ctx, id)
+	assert.NoError(t, err)
+	assert.Equal(t, "value_"+id, valueOfKey)
 }

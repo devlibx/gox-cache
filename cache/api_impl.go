@@ -5,6 +5,7 @@ import (
 	"github.com/devlibx/gox-base/v2"
 	"github.com/devlibx/gox-base/v2/errors"
 	goxCache "github.com/devlibx/gox-cache/v2"
+	inmemoryCache "github.com/devlibx/gox-cache/v2/inmemory"
 	noopCache "github.com/devlibx/gox-cache/v2/noop"
 	redisCache "github.com/devlibx/gox-cache/v2/redis"
 	"go.uber.org/zap"
@@ -70,6 +71,14 @@ func (r *registryImpl) RegisterCache(config *goxCache.Config) (goxCache.Cache, e
 		switch strings.ToLower(config.Type) {
 		case "redis":
 			cache, err := redisCache.NewRedisCache(r.CrossFunction, config)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to register cache to registry: name=%s", config.Name)
+			} else {
+				r.caches[config.Name] = cache
+				return cache, err
+			}
+		case "inmemory":
+			cache, err := inmemoryCache.NewInMemoryCache(r.CrossFunction, config)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to register cache to registry: name=%s", config.Name)
 			} else {
